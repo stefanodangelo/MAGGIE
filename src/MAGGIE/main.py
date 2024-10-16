@@ -1,24 +1,18 @@
-from pyspark.sql import SparkSession, DataFrame
-
-
-def get_taxis(spark: SparkSession) -> DataFrame:
-    return spark.read.table("samples.nyctaxi.trips")
-
-
-# Create a new Databricks Connect session. If this fails,
-# check that you have configured Databricks Connect correctly.
-# See https://docs.databricks.com/dev-tools/databricks-connect.html.
-def get_spark() -> SparkSession:
-    try:
-        from databricks.connect import DatabricksSession
-
-        return DatabricksSession.builder.getOrCreate()
-    except ImportError:
-        return SparkSession.builder.getOrCreate()
-
+from utils import spark, CATALOG_NAME, SCHEMA_NAME, VOLUME_NAME, PDFS_FOLDER, URLS, RAW_PDF_TABLE, CLEAN_PDF_TABLE
+from autoloader import Autoloader
 
 def main():
-    get_taxis(get_spark()).show(5)
+    catalog = CATALOG_NAME if '-' not in CATALOG_NAME else '`'.join([CATALOG_NAME, ''])
+    schema = SCHEMA_NAME if '-' not in SCHEMA_NAME else '`'.join([SCHEMA_NAME, ''])
+    volume = VOLUME_NAME if '-' not in VOLUME_NAME else '`'.join([VOLUME_NAME, ''])
+    pdfs_folder = PDFS_FOLDER if '-' not in PDFS_FOLDER else '`'.join([PDFS_FOLDER, ''])
+    spark.sql(f"CREATE CATALOG IF NOT EXISTS {catalog}")
+    spark.sql(f"USE CATALOG {spark}")
+    spark.sql(f"CREATE DATABASE IF NOT EXISTS {spark}.{schema}")
+    spark.sql(f"USE SCHEMA {schema}")
+    
+    loader = Autoloader(catalog, schema, volume, pdfs_folder)
+    loader.load_pdfs_to_catalog(URLS, RAW_PDF_TABLE, CLEAN_PDF_TABLE)
 
 
 if __name__ == "__main__":
