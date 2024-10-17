@@ -10,15 +10,15 @@ resources:
         timezone_id: Europe/Amsterdam
       
       tasks:
-        - task_key: load_secrets
-          job_cluster_key: job_cluster
-          notebook_task:
-            notebook_path: ../load_secrets.ipynb
+        # - task_key: load_secrets
+        #   job_cluster_key: job_cluster
+        #   notebook_task:
+        #     notebook_path: ../load_secrets.ipynb
 
         - task_key: main_task
           job_cluster_key: job_cluster
-          depends_on:
-            - task_key: load_secrets
+          # depends_on:
+          #   - task_key: load_secrets
           python_wheel_task:
             package_name: MAGGIE
             entry_point: main
