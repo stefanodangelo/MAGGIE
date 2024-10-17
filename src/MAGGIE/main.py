@@ -7,14 +7,21 @@ from utils import (
     URLS,
     RAW_PDF_TABLE,
     CLEAN_PDF_TABLE,
+    PDFS_TABLE_FULLNAME,
     VECTOR_SEARCH_ENDPOINT_NAME,
     VS_INDEX_FULLNAME,
     TABLE_PATH,
     VS_PRIMARY_KEY,
-    EMBEDDING_COLUMN
+    EMBEDDING_COLUMN,
+    CHAIN_CONFIG_FILE,
+    RAG_CONFIG,
+    MODEL_NAME,
+    MODEL_SCRIPT_PATH,
 )
-from autoloader import Autoloader
+from autoloader import AutoLoader
 from vector_search import VectorStore
+from deployment import DeploymentManager
+import yaml
 
 
 def initialize():
@@ -27,11 +34,25 @@ def initialize():
     spark.sql(f"CREATE DATABASE IF NOT EXISTS {spark}.{schema}")
     spark.sql(f"USE SCHEMA {schema}")
     
-    loader = Autoloader(catalog, schema, volume, pdfs_folder)
+    # Load data into Unity Catalog
+    loader = AutoLoader(catalog, schema, volume, pdfs_folder)
     loader.load_pdfs_to_catalog(URLS, RAW_PDF_TABLE, CLEAN_PDF_TABLE)
 
+    # Create Vector Store for user query retrieval
     vector_store = VectorStore(index_table_name=TABLE_PATH.format(table_name=VS_INDEX_FULLNAME), endpoint_name=VECTOR_SEARCH_ENDPOINT_NAME)
-    vector_store.create_index(primary_key=VS_PRIMARY_KEY, embedding_vector_column=EMBEDDING_COLUMN, source_table_name=TABLE_PATH.format(table_name=CLEAN_PDF_TABLE))
+    vector_store.create_index(primary_key=VS_PRIMARY_KEY, embedding_vector_column=EMBEDDING_COLUMN, source_table_name=PDFS_TABLE_FULLNAME)
+
+    # Save RAG configuration file for deployment purposes 
+    try:
+        with open(CHAIN_CONFIG_FILE, 'w') as f:
+            yaml.dump(RAG_CONFIG, f)
+    except:
+        print('pass to work on build job')
+
+    # Log and deploy model
+    deployment_manager = DeploymentManager(model_name_full_path = f"{catalog}.{schema}.{MODEL_NAME}")
+    deployment_manager.log_model(MODEL_SCRIPT_PATH, CHAIN_CONFIG_FILE, run_name="hackathon_rag")
+    deployment_manager.deploy_model()
 
 def main():
     initialize()

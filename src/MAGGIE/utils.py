@@ -7,6 +7,7 @@ import json
 import warnings
 import re
 import time
+import yaml
 
 from datetime import datetime
 
@@ -40,6 +41,7 @@ from databricks.feature_engineering.entities.feature_serving_endpoint import (
 
 import pyspark.sql.functions as F
 from pyspark.sql import SparkSession, DataFrame
+from prompt import *
 
 def get_spark() -> SparkSession:
     try:
@@ -56,6 +58,10 @@ spark = get_spark()
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 10
 SPLIT_TYPE = 'markdown'
+MAX_TOKENS = 1500
+TEMPERATURE = 0.01
+TOP_K = 3
+SIMILARITY_QUERY_TYPE = "ann"
 
 PARSERS = {
     'sentence': SentenceSplitter(chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP),
@@ -100,14 +106,52 @@ SCHEMA_NAME = "bronze"
 TABLE_PATH = "{}.{}.".format(CATALOG_NAME, SCHEMA_NAME) + "{table_name}"
 
 VS_INDEX_FULLNAME = TABLE_PATH.format(table_name="hackathon_pdfs_self_managed_vs_index") # Where we want to store our index
-PDFS_TABLE_FULLNAME = TABLE_PATH.format(table_name="hackathon_pdf_chunks") # Table containing the PDF's chunks
+PDFS_TABLE_FULLNAME = TABLE_PATH.format(table_name=CLEAN_PDF_TABLE) # Table containing the PDF's chunks
 
 CHAIN_CONFIG_FILE = "rag_chain_config.yaml"
+MODEL_SCRIPT_PATH = os.path.join(os.getcwd(), "mlflow/chain.py")
 
 MODEL_NAME = "hackathon_rag_model"
-MODEL_NAME_FQN = TABLE_PATH.format(table_name=MODEL_NAME)
 
 EMBEDDING_MODEL = "databricks-gte-large-en"
+CHAT_MODEL = "databricks-meta-llama-3-1-70b-instruct"
+
+RAG_CONFIG = {
+    "databricks_resources": {
+        "llm_endpoint_name": CHAT_MODEL,
+        "vector_search_endpoint_name": VECTOR_SEARCH_ENDPOINT_NAME,
+    },
+    "input_example": {
+        "messages": [
+            # {"role": "user", "content": "What is a drum brake?"},
+            # {"role": "assistant", "content": "A drum brake is a brake that uses friction caused by a set of shoes or pads that press outward against a rotating bowl-shaped part called a brake drum."},
+            {"role": "user", "content": "How do I install an ecometer?"}
+        ]
+    },
+    "output_example": """
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
+        Ut erat mi, pretium ac aliquam vitae, fermentum at risus. 
+        Ut faucibus, lorem sit amet iaculis auctor, odio lacus cursus mauris, ut ornare erat mauris id nibh. 
+        Curabitur nulla magna, posuere quis fermentum sit amet, maximus eu mi.
+    """,
+    "llm_config": {
+        "llm_parameters": {"max_tokens": MAX_TOKENS, "temperature": TEMPERATURE},
+        "llm_prompt_template": SYSTEM_MESSAGE_TEMPLATE,
+        "llm_prompt_template_variables": extract_vars_from_format_str(SYSTEM_MESSAGE_TEMPLATE),
+    },
+    "retriever_config": {
+        "embedding_model": EMBEDDING_MODEL,
+        "chunk_template": CHUNK_TEMPLATE,
+        "query_rewrite_template": QUERY_REWRITE_TEMPLATE,
+        "data_pipeline_tag": "poc",
+        "parameters": {"k": TOP_K, "query_type": SIMILARITY_QUERY_TYPE},
+        "schema": {"chunk_text": "content", "document_uri": "url", "primary_key": "id", "page_nr": "page_number"}, # the keys need to match CHUNK_TEMPLATE's variables
+        "vector_search_index": VS_INDEX_FULLNAME,
+    },
+}
+
+
+
 
 
 # Helper methods

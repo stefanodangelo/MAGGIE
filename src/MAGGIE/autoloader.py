@@ -7,7 +7,7 @@ from typing import List
 import pyspark.sql.functions as F
 from preprocessing import preprocess
 
-class Autoloader:
+class AutoLoader:
     def __init__(self, catalog: str, schema: str, volume: str, pdfs_folder: str) -> None:
         self.volume = f"/Volumes/{catalog}/{schema}/{volume}"
         self.pdfs_path = self.volume + '/' + pdfs_folder.replace('/', '')
