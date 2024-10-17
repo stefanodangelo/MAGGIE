@@ -31,7 +31,6 @@ from typing import Union
 from PIL import Image
 
 from llama_index.core.node_parser import SentenceSplitter, MarkdownElementNodeParser, MarkdownNodeParser
-from databricks.vector_search.client import VectorSearchClient
 from databricks.feature_engineering.entities.feature_lookup import FeatureLookup
 from databricks.feature_engineering import FeatureEngineeringClient, FeatureFunction
 from databricks.feature_engineering.entities.feature_serving_endpoint import (
@@ -91,8 +90,8 @@ VOLUME_NAME = 'volume_hackathon'
 PDFS_FOLDER = 'pdfs'
 
 VECTOR_SEARCH_ENDPOINT_NAME = "rag_endpoint"
-
-VSC = VectorSearchClient()
+VS_PRIMARY_KEY = "id"
+EMBEDDING_COLUMN = "embedding"
 
 FEC = FeatureEngineeringClient()
 

@@ -60,7 +60,7 @@ class Autoloader:
 
     def _write_clean_pdfs(self, raw_table_name: str, clean_table_name: str) -> None:
         (
-            preprocess(spark.readStream.table(raw_table_name))            
+            preprocess(spark.readStream.table(raw_table_name), save_table_name=clean_table_name)            
             .writeStream
             .trigger(availableNow=True)
             .option("checkpointLocation", self.clean_checkpoints_path)
