@@ -22,6 +22,79 @@ Question: {question}
 
 CHUNK_TEMPLATE = "Passage: {chunk_text}\nSource: Page {page_nr} from {document_uri}\n"
 
+OUTPUT_REWRITE_TEMPLATE = """
+Based on the chat history below, we want you to restructure the answer into a list of tools, a list of parts and a series of steps needed to accomplish the actions outlined in the answer.
+Additionally, list out some safety advices related to the required steps and tools used.
+List tools, parts, and steps that are only mentioned in the answer. 
+If any step requires sub-steps, list them too. Do not add explanation. 
+Include as many details as possible.
+
+Example:
+    Chat history:
+        User: How do I replace brake pads on a trailer?
+        Assistant: 
+            To replace brake pads on a trailer you need to first remove the wheel and the slider bolt with a torx wrench (T25, BPW no. 02.0130.44.10). 
+            Next, pivot the caliper up and slide out the old brake pads. Then, slide in the new brake pads and retract the pistons. 
+            To check if you did replaced them correctly, you can monitor the brake fluid level. Finally, reposition the caliper and reinstall the slider bolt.
+        User: What parts or components are needed?
+            You need new brake pads of the same type as those that you will replace. Optionally, you may need new brake fluid from a compatible manufacturer.
+    Restructured Answer:
+        Here is what you need to replace brake pads on a trailer. 
+        
+        Tools required:
+            - torx wrench (T25, BPW no. 02.0130.44.10)
+        
+        Parts required:
+            - new brake pads
+            - (optional) new brake fluid
+            
+        Steps required:
+            1. Remove the wheel.
+            2. Remove the slider bolt.
+            3. Pivot the caliper up.
+            4. Slide out the old brake pads.
+            5. Replace the retaining clips.
+            6. Slide in the new brake pads.
+            7. Retract the pistons.
+            8. Monitor the brake fluid level.
+            9. Reposition the caliper.
+            10. Reinstall the slider bolt.
+
+        Safety advices:
+            - Ensure the trailer is securely parked: Park the trailer on a flat, stable surface and engage the parking brake to prevent movement.
+            - Wear protective gear: Use gloves, safety glasses, and sturdy work boots to protect your hands, eyes, and feet.
+            - Use proper lifting equipment: Use a jack rated for the weight of the trailer and jack stands to support it safely before removing the wheel.
+            - Avoid contact with hot components: Let the brakes cool down completely before starting the work to avoid burns from hot parts.
+            - Work in a well-ventilated area: If replacing brake fluid, work in a well-ventilated area to avoid inhaling fumes.
+            - Handle brake fluid carefully: Brake fluid is corrosive; avoid skin contact and clean spills immediately.
+            - Check for correct tool usage: Use the correct size Torx wrench (T25) to avoid stripping the bolts.
+            - Do not overfill the brake fluid reservoir: If adding brake fluid, ensure the level is correct to avoid pressure issues.
+            - Check brake function before use: After reassembly, pump the brake pedal to ensure proper brake function and check for leaks or unusual noises before moving the trailer.
+
+    Chat history: {chat_history}
+
+    Restructured Answer:
+    """
+
+TOOLS_SYSTEM_MESSAGE_ADDITION = """
+You have access to the following tools:
+
+{tools}
+
+Use the following format:
+
+Question: the input question you must answer
+Thought: you should always think about what to do
+Action: the action to take, should be one of [{tool_names}]
+Action Input: the input to the action
+Observation: the result of the action
+... (this Thought/Action/Action Input/Observation can repeat N times)
+Thought: I now know the final answer
+Final Answer: the final answer to the original input question
+
+Begin!
+"""
+
 REVIEW_APP_INSTRUCTIONS = f"""
 ### Instructions for Testing the Maintenance assistant
 

@@ -76,7 +76,7 @@ def extract_chat_history(chat_messages_array):
     last_n = 5 # always use an even number to capture both questions and answers in the chat history
     return chat_messages_array[-last_n:-1] if chat_messages_array[-1]["role"] == "user" else chat_messages_array[-last_n:]
 
-# Format the converastion history to fit into the prompt template below.
+# Format the conversation history to fit into the prompt template below.
 def format_chat_history_for_prompt(chat_messages_array):
     ## TODO: summarize older messages and append the last pair of user-assistant messages
     history = extract_chat_history(chat_messages_array)
@@ -140,7 +140,7 @@ def get_tools(wh_id="36943660786efec7", catalog='`dev-gold`', schema="maggie_hac
 full_prompt = ChatPromptTemplate.from_messages(
     [
         ("system", llm_config.get("llm_prompt_template")),
-        # Note: This chain does not compress the history, so very long converastions can overflow the context window.
+        # Note: This chain does not compress the history, so very long conversations can overflow the context window.
         MessagesPlaceholder(variable_name="formatted_chat_history"),
         # User's most current question
         ("user", "{question}"),
@@ -154,25 +154,8 @@ prompt_with_tools = ChatPromptTemplate.from_messages(
         # ("placeholder", "{chat_history}"),
         # ("human", "{input}"),
         # ("placeholder", "{agent_scratchpad}"),
-        ("system", llm_config.get("llm_prompt_template") + """
-            You have access to the following tools:
-
-            {tools}
-
-            Use the following format:
-
-            Question: the input question you must answer
-            Thought: you should always think about what to do
-            Action: the action to take, should be one of [{tool_names}]
-            Action Input: the input to the action
-            Observation: the result of the action
-            ... (this Thought/Action/Action Input/Observation can repeat N times)
-            Thought: I now know the final answer
-            Final Answer: the final answer to the original input question
-
-            Begin!
-        """),
-        # Note: This chain does not compress the history, so very long converastions can overflow the context window.
+        ("system", llm_config.get("llm_prompt_template") + llm_config.get("tools_prompt_addition")),
+        # Note: This chain does not compress the history, so very long conversations can overflow the context window.
         MessagesPlaceholder(variable_name="formatted_chat_history"),
         # User's most current question
         ("human", "{input}"),
@@ -180,50 +163,16 @@ prompt_with_tools = ChatPromptTemplate.from_messages(
     ]
 )
 
-# Prompt Template for query rewriting to allow converastion history to work - this will translate a query such as "how does it work?" after a question such as "what is spark?" to "how does spark work?".
+# Prompt Template for query rewriting to allow conversation history to work - this will translate a query such as "how does it work?" after a question such as "what is spark?" to "how does spark work?".
 query_rewrite_prompt = PromptTemplate(
     template=retriever_config.get("query_rewrite_template"),
-    input_variables=["chat_history", "question"],
+    input_variables=retriever_config.get("query_rewrite_template_variables")
 )
 
 # Prompt Template for output rewriting - this will list tools required by the user to perform an action (example "replace brake pads" -> tools: - Wrenches - ...; steps: 1, 2, ...)
 output_rewrite_prompt_sequential = PromptTemplate(
-    template="""Based on the chat history below, we want you to restructure the answer into a list of tools, a list of parts and a series of steps needed to accomplish the actions outlined in the answer. List tools, parts, and steps that are only mentioned in the answer. If any step requires sub-steps, list them too. Do not add explanation. Include as many details as possible.
-
-    Example:
-        Chat history:
-            User: How do I replace brake pads on a trailer?
-            Assistant: 
-                To replace brake pads on a trailer you need to first remove the wheel and the slider bolt with a torx wrench (T25, BPW no. 02.0130.44.10). Next, pivot the caliper up and slide out the old brake pads. Then, slide in the new brake pads and retract the pistons. To check if you did replaced them correctly, you can monitor the brake fluid level. Finally, reposition the caliper and reinstall the slider bolt.
-            User: What parts or components are needed?
-                You need new brake pads of the same type as those that you will replace. Optionally, you may need new brake fluid from a compatible manufacturer.
-        Restructured Answer:
-            Here is what you need to replace brake pads on a trailer. 
-            
-            Tools required:
-                - torx wrench (T25, BPW no. 02.0130.44.10)
-            
-            Parts required:
-                - new brake pads
-                - (optional) new brake fluid
-                
-            Steps required:
-                1. Remove the wheel.
-                2. Remove the slider bolt.
-                3. Pivot the caliper up.
-                4. Slide out the old brake pads.
-                5. Replace the retaining clips.
-                6. Slide in the new brake pads.
-                7. Retract the pistons.
-                8. Monitor the brake fluid level.
-                9. Reposition the caliper.
-                10. Reinstall the slider bolt.
-
-    Chat history: {chat_history}
-
-    Restructured Answer:
-    """,
-    input_variables=["chat_history"],
+    template=llm_config.get("output_rewrite_template"),
+    input_variables=llm_config.get("output_rewrite_template_variables"),
 )
 
 

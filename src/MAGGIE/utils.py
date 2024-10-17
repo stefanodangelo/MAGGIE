@@ -137,12 +137,16 @@ RAG_CONFIG = {
     "llm_config": {
         "llm_parameters": {"max_tokens": MAX_TOKENS, "temperature": TEMPERATURE},
         "llm_prompt_template": SYSTEM_MESSAGE_TEMPLATE,
+        "tools_prompt_addition": TOOLS_SYSTEM_MESSAGE_ADDITION,
         "llm_prompt_template_variables": extract_vars_from_format_str(SYSTEM_MESSAGE_TEMPLATE),
+        "output_rewrite_template": OUTPUT_REWRITE_TEMPLATE,
+        "output_rewrite_template_variables": extract_vars_from_format_str(OUTPUT_REWRITE_TEMPLATE),
     },
     "retriever_config": {
         "embedding_model": EMBEDDING_MODEL,
         "chunk_template": CHUNK_TEMPLATE,
         "query_rewrite_template": QUERY_REWRITE_TEMPLATE,
+        "query_rewrite_template_variables": extract_vars_from_format_str(QUERY_REWRITE_TEMPLATE),
         "data_pipeline_tag": "poc",
         "parameters": {"k": TOP_K, "query_type": SIMILARITY_QUERY_TYPE},
         "schema": {"chunk_text": "content", "document_uri": "url", "primary_key": "id", "page_nr": "page_number"}, # the keys need to match CHUNK_TEMPLATE's variables
