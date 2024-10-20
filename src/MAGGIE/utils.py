@@ -1,36 +1,4 @@
-import zipfile
-import logging
 import os
-import io
-import pandas as pd
-import json
-import warnings
-import re
-import time
-import yaml
-
-from datetime import datetime
-
-from pypdf import PdfReader
-
-# from adobe.pdfservices.operation.auth.service_principal_credentials import ServicePrincipalCredentials
-# from adobe.pdfservices.operation.exception.exceptions import ServiceApiException, ServiceUsageException, SdkException
-# from adobe.pdfservices.operation.io.cloud_asset import CloudAsset
-# from adobe.pdfservices.operation.io.stream_asset import StreamAsset
-# from adobe.pdfservices.operation.pdf_services import PDFServices
-# from adobe.pdfservices.operation.pdf_services_media_type import PDFServicesMediaType
-# from adobe.pdfservices.operation.pdfjobs.jobs.extract_pdf_job import ExtractPDFJob
-# from adobe.pdfservices.operation.pdfjobs.params.extract_pdf.extract_element_type import ExtractElementType
-# from adobe.pdfservices.operation.pdfjobs.params.extract_pdf.extract_pdf_params import ExtractPDFParams
-# from adobe.pdfservices.operation.pdfjobs.params.extract_pdf.extract_renditions_element_type import ExtractRenditionsElementType
-# from adobe.pdfservices.operation.pdfjobs.result.extract_pdf_result import ExtractPDFResult
-
-from typing import Union
-
-# import pymupdf
-# import pymupdf4llm
-from PIL import Image
-
 from llama_index.core.node_parser import SentenceSplitter, MarkdownElementNodeParser, MarkdownNodeParser
 from databricks.feature_engineering.entities.feature_lookup import FeatureLookup
 from databricks.feature_engineering import FeatureEngineeringClient, FeatureFunction
@@ -39,7 +7,6 @@ from databricks.feature_engineering.entities.feature_serving_endpoint import (
     ServedEntity
 )
 
-import pyspark.sql.functions as F
 from pyspark.sql import SparkSession, DataFrame
 from prompt import *
 
@@ -94,6 +61,9 @@ RAW_PDF_TABLE = 'hackathon_pdf_raw'
 CLEAN_PDF_TABLE = 'hackathon_pdf_chunks'
 VOLUME_NAME = 'volume_hackathon' 
 PDFS_FOLDER = 'pdfs'
+
+QR_CODES_DIR = './qr_codes'
+PARTS_LIST_TABLE = 'part_lists'
 
 VECTOR_SEARCH_ENDPOINT_NAME = "rag_endpoint"
 VS_PRIMARY_KEY = "id"
@@ -153,108 +123,3 @@ RAG_CONFIG = {
         "vector_search_index": VS_INDEX_FULLNAME,
     },
 }
-
-
-
-
-
-# Helper methods
-
-# def render_page_as_image(pdf_path: str, page_number: int) -> Image:
-#     doc = pymupdf.open(pdf_path)
-#     page = doc[page_number]
-#     pix = page.get_pixmap(dpi=150)
-#     return Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-
-
-# def extract_images(pdf_path: str):
-#     import io
-
-#     pil_imgs = []
-#     doc = pymupdf.open(pdf_path)
-#     for i in range(1, doc.xref_length()):
-#         try:
-#             img = doc.extract_image(i)
-#             pil_imgs.append(Image.open(io.BytesIO(img['image'])))
-#         except:
-#             pass
-#     return pil_imgs
-
-# def extract_tables(text: str):
-#     parser = MarkdownElementNodeParser()
-#     elems = parser.extract_elements(text)
-#     page_text = ''
-#     tables = []
-#     for elem in elems:
-#         if elem.type == 'table':
-#             tables.append(elem.element)
-#         else:
-#             page_text += elem.element
-#             ## TODO: elem.table contains a pd.DataFrame version of elem.element when elem.type == 'table'
-
-#     return page_text, tables
-
-# def preprocess_pdf(pdf_path, use_llama=False, isolate_tables=False):
-#     # img_root = './images'
-#     # img_path = os.path.join(img_root, PDF_PATHS[2].split('/')[-1].replace('.pdf', ''))
-#     # os.makedirs(img_path, exist_ok=True)
-
-#     # Process PDF
-#     if use_llama:   
-#         llama_reader = pymupdf4llm.LlamaMarkdownReader()
-#         pages = llama_reader.load_data(pdf_path, margins=0, table_strategy='lines')
-#     else:
-#         pages = pymupdf4llm.to_markdown(
-#             pdf_path, 
-#             page_chunks=True, 
-#             extract_words=False, 
-#             # write_images=True, 
-#             # dpi=150, 
-#             # image_path=img_path, 
-#             # image_format='png', 
-#             # image_size_limit=0, 
-#             margins=0, 
-#             table_strategy='lines'
-#         )
-
-#     cols = ['path', 'title', 'page_number', 'text']
-#     contents_df = None
-#     tables_df = None
-#     for page in pages:
-#         if use_llama:
-#             page = page.dict()
-#         text = page['text'].replace('-----', '').strip()
-#         text, tables = extract_tables(text) if isolate_tables else (text, None)
-
-#         new_row = spark.createDataFrame([[page['metadata']['file_path'], page['metadata']['title'], page['metadata']['page'], text]], schema=cols)
-#         contents_df = contents_df.union(new_row) if contents_df is not None else new_row
-
-#         if tables is not None:
-#             for t in tables:
-#                 new_row = spark.createDataFrame([[page['metadata']['file_path'], page['metadata']['title'], page['metadata']['page'], t]], schema=cols)
-#                 tables_df = contents_df.union(new_row) if tables_df is not None else new_row
-
-#     # Filter content
-#     initial_text = r"(?:.*\n+)?"
-#     markdown_titles = r"(#+\s.*\n+)"
-#     markdown_content = r"(.*)"
-#     pattern = initial_text + markdown_titles + markdown_content
-
-#     # pages_to_remove = []
-#     # for idx, row in contents.collect():
-#     #     # Use re.DOTALL to make '.' match any character including newlines
-#     #     matches = re.findall(pattern, row['content'], re.DOTALL)
-#     #     if len(matches) == 0:
-#     #         contents = contents.filter(contents['page_number'] != idx + 1)
-
-#     # contents_df = contents_df.withColumn('to_remove', (F.regexp_extract('text', pattern, 0) == '')).filter('to_remove == false').drop('to_remove')
-
-#     return contents_df, tables_df
-    
-
-def table_exists(table_name):
-    try:
-        spark.table(table_name).isEmpty()
-    except:
-        return False
-    return True

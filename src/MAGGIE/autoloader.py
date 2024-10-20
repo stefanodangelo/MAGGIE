@@ -70,5 +70,8 @@ class AutoLoader:
         
     def load_pdfs_to_catalog(self, urls: List[str], raw_table_name: str, clean_table_name: str) -> None:
         self._download_pdfs(urls)
-        self._write_clean_pdfs(raw_table_name)
+        self._write_raw_pdfs(raw_table_name)
         self._write_clean_pdfs(raw_table_name, clean_table_name)
+
+        df = spark.sql("SELECT DISTINCT path FROM .clean_table_name}")
+        self.pdfs =  [r.path for r in df.collect()] # save all the paths to pdfs
