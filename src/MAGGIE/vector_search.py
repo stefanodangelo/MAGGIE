@@ -75,7 +75,7 @@ class VectorStore:
                 raise Exception(f'''Error with the index - this shouldn't happen. DLT pipeline might have been killed.\n Please delete it and run: vsc.delete_index("{self.index_full_name}, {self.endpoint_name}") \nIndex details: {idx}''')
         raise Exception(f"Timeout, your index isn't ready yet: {self.vsc.get_index(self.index_full_name, self.endpoint_name)}")
 
-    def create_index(self, primary_key: str, source_table_name: str, embedding_vector_column: str, embedding_dimension: int = 1024, pipeline_type: str = "TRIGGERED"):
+    def create_or_update_index(self, primary_key: str, source_table_name: str, embedding_vector_column: str, embedding_dimension: int = 1024, pipeline_type: str = "TRIGGERED"):
         if not self._index_exists():
             print(f"Creating index {self.index_full_name} on endpoint {self.endpoint_name}...")
             try:

@@ -151,7 +151,7 @@ class QRCodeScraper:
         df['qr_code_url'] = url
         df['qr_code_id'] = id
 
-        part_lists_df = spark.createDataFrame(df).select('item_number', 'part_number', 'designation', 'part_code', 'part_name', 'qr_code_url')
+        part_lists_df = spark.createDataFrame(df).select('item_number', 'part_number', 'designation', 'part_code', 'part_name', 'qr_code_url', 'qr_code_id')
 
         # part_lists_df = part_lists_df.withColumnRenamed('Part number', 'part_number')
         # part_lists_df = part_lists_df.withColumnRenamed('Designation', 'designation')

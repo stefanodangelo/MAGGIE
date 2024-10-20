@@ -58,7 +58,7 @@ def main():
     # Create Vector Store for user query retrieval
     print("Deploying Vector Store...")
     vector_store = VectorStore(index_table_name=TABLE_PATH.format(table_name=VS_INDEX_FULLNAME), endpoint_name=VECTOR_SEARCH_ENDPOINT_NAME)
-    vector_store.create_index(primary_key=VS_PRIMARY_KEY, embedding_vector_column=EMBEDDING_COLUMN, source_table_name=PDFS_TABLE_FULLNAME)
+    vector_store.create_or_update_index(primary_key=VS_PRIMARY_KEY, embedding_vector_column=EMBEDDING_COLUMN, source_table_name=PDFS_TABLE_FULLNAME)
 
     # Log and deploy model
     deployment_manager = DeploymentManager(model_name_full_path = f"{catalog}.{schema}.{MODEL_NAME}")
