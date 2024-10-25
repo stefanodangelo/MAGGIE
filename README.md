@@ -43,13 +43,13 @@ Refer to the official documentation on [how to deploy and run a Databricks Asset
 ### Explanation of the repo structure
 The main code is in `/src/MAGGIE`, which has the following structure:
 
-*root (/src/MAGGIE)*
-|-`autoloader.py`: reads files from source and uploads them to Unity Catalog
-|-`deployment.py`: supports model deployments
-|-`main.py`: entrypoint where the main flow is defined 
-|-`preprocessing.py`: contains all the custom functions used to pre-process data
-|-`prompt.py`: contains all the textual prompts to instruct each model
-|-`utils.py`: defines variables and hyperparameters
+*root (/src/MAGGIE)* \
+|-`autoloader.py`: reads files from source and uploads them to Unity Catalog \
+|-`deployment.py`: supports model deployments \
+|-`main.py`: entrypoint where the main flow is defined \
+|-`preprocessing.py`: contains all the custom functions used to pre-process data \
+|-`prompt.py`: contains all the textual prompts to instruct each model \
+|-`utils.py`: defines variables and hyperparameters \
 |-`vector_search.py`: creates and deploys Vector Search Index
 
 Databricks job definitions can be found in `databricks.yml` and in `/resources/MAGGIE_job.yml`.
@@ -61,9 +61,9 @@ The folder `scratch` contains the notebooks used during the early development st
 This project was realized for the [2024 GenAI World Cup](https://hackathon.stackup.dev/web/events/generative-ai-world-cup-2024-so-you-think-you-can-hack) hosted by Databricks.
 
 #### Authors
-- Stefano D'Angelo
+- Stefano D'Angelo\
 *Github*: [stefanodangelo](https://github.com/stefanodangelo)
-- Hugo Martins
+- Hugo Martins\
 *Github*: [hrfmartins](https://github.com/hrfmartins)
-- Nicolas Amodeo
+- Nicolas Amodeo\
 *Github*: [n-bradley](https://github.com/n-bradley/)
