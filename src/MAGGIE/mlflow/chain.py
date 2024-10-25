@@ -188,17 +188,17 @@ model = ChatDatabricks(
 model_parser = model | StrOutputParser()
 
 # Tools and Agent
-tools = get_tools()
-# model_with_tools = create_tool_calling_agent(model, tools, prompt_with_tools)
-model_with_tools = create_react_agent(model, tools, prompt_with_tools) 
-agent_executor = AgentExecutor(agent=model_with_tools, tools=tools, verbose=True)
+# tools = get_tools()
+# # model_with_tools = create_tool_calling_agent(model, tools, prompt_with_tools)
+# model_with_tools = create_react_agent(model, tools, prompt_with_tools) 
+# agent_executor = AgentExecutor(agent=model_with_tools, tools=tools, verbose=True)
 
-def agent_executor_wrapper(input_data):
-    # Wrapping the agent_executor invocation
-    question = input_data['question']
-    chat_history = input_data['formatted_chat_history']
-    result = agent_executor.invoke({"input": question, "formatted_chat_history": chat_history})
-    return result["output"]
+# def agent_executor_wrapper(input_data):
+#     # Wrapping the agent_executor invocation
+#     question = input_data['question']
+#     chat_history = input_data['formatted_chat_history']
+#     result = agent_executor.invoke({"input": question, "formatted_chat_history": chat_history})
+#     return result["output"]
 
 
 # Chains
@@ -233,14 +233,6 @@ parts_listing_question = RunnableLambda(lambda x: "What compatible parts or comp
 tools_listing_question = RunnableLambda(lambda x: "What tools must be used?")
 
 # Final outputs selection
-final_outputs = (
-    {
-        "question": itemgetter("original_question"),
-        "answer": itemgetter("answer"),
-        "references": lambda x: combine_references(x),
-    }
-)
-
 select_outputs = lambda x: dict((k, x[k]) for k in ["question", "answer", "references"])
 dict_to_str = lambda x: json.dumps(x)
 
@@ -265,7 +257,6 @@ chain = (
         question=itemgetter("original_question"),
         references=RunnableLambda(lambda x: combine_references(x)),
     )
-    # | final_outputs
     | RunnableLambda(select_outputs)
     | RunnableLambda(dict_to_str)
     # | RunnableLambda(agent_executor_wrapper)  # Pass the query to the agent executor

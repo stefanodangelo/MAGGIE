@@ -8,7 +8,7 @@ from databricks.feature_engineering.entities.feature_serving_endpoint import (
 )
 
 from pyspark.sql import SparkSession, DataFrame
-from prompt import *
+from .prompt import *
 
 def get_spark() -> SparkSession:
     try:
@@ -81,10 +81,11 @@ PDFS_TABLE_FULLNAME = TABLE_PATH.format(table_name=CLEAN_PDF_TABLE) # Table cont
 CHAIN_CONFIG_FILE = "rag_chain_config.yaml"
 MODEL_SCRIPT_PATH = os.path.join(os.getcwd(), "mlflow/chain.py")
 
-MODEL_NAME = "hackathon_rag_model"
+MODEL_NAME = "hackathon_maggie"
 
 EMBEDDING_MODEL = "databricks-gte-large-en"
-CHAT_MODEL = "databricks-meta-llama-3-1-70b-instruct"
+# CHAT_MODEL = "databricks-meta-llama-3-1-70b-instruct"
+CHAT_MODEL = 'dbrx_instruct'
 
 RAG_CONFIG = {
     "databricks_resources": {

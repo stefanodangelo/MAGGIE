@@ -2,10 +2,10 @@ import os
 import requests
 import collections
 from concurrent.futures import ThreadPoolExecutor
-from utils import spark
+from .utils import spark
 from typing import List
 import pyspark.sql.functions as F
-from preprocessing import preprocess
+from .preprocessing import preprocess
 
 class AutoLoader:
     def __init__(self, catalog: str, schema: str, volume: str, pdfs_folder: str) -> None:

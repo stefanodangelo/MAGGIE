@@ -1,8 +1,8 @@
 transformers==4.41.1
 pypdf==4.1.0
 langchain-text-splitters==0.2.0
-databricks-vectorsearch
-mlflow
+databricks-vectorsearch==0.41
+mlflow==2.16.2
 tiktoken==0.7.0
 torch==2.3.0
 llama-index==0.10.43
@@ -11,9 +11,8 @@ langchain-community
 rapidocr-onnxruntime
 pymupdf
 pymupdf4llm
-databricks-agents
+databricks-agents==0.7.0
 mlflow-skinny
-mlflow
 mlflow[gateway]
 langchain==0.2.1
 langchain_core==0.2.5
@@ -23,3 +22,4 @@ grandalf
 databricks-feature-engineering
 opencv-python==4.10.0.84
 beautifulsoup4==4.12.3
+delta-spark==3.2.0

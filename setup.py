@@ -10,6 +10,7 @@ from setuptools import setup, find_packages
 import os
 import sys
 sys.path.append('./src')
+sys.path.append('./src/MAGGIE')
 
 import datetime
 import MAGGIE

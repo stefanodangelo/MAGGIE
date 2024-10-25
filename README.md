@@ -1,7 +1,8 @@
-## MAGGIE (MAintenance Generative Guide for Industrial Efficiency)
+# MAGGIE - MAintenance Generative Guide for Industrial Efficiency
 
 TIP Group is pleased to introduce *MAGGIE*!
 
+## 1. Project description
 ### What is MAGGIE?
 **MAGGIE** (**MA**intenance **G**enerative **G**uide for **I**ndustrial **E**fficiency) is a cutting-edge digital assistant specifically designed to revolutionize the repair and maintenance workflows in the automotive industry, particularly for mechanics working in complex environments like TIP workshops. 
 For companies like TIP, which service *thousands of trailers* across Europe, the inefficiencies in repair workflows lead to increased labor costs, longer repair times, and reduced customer satisfaction. MAGGIE addresses all these issues by providing mechanics with instant access to the exact tools, parts, and step-by-step instructions needed to complete repairs, installations and replacements. 
@@ -27,3 +28,42 @@ The design leverages:
 - **Databricks Model Serving** to allow the model to be invoked as a low-latency API on a highly available serverless service, guaranteeing high throughput at low costs. 
 
 Each component is encapsulated within a *Databricks Asset Bundle*, making it easy to update and redeploy the system without significant downtime or codebase restructuring. This modular approach ensures that the system can be adapted to new assets, manufacturers, or repair procedures with minimal effort, driving down costs as the system scales.
+
+### What are MAGGIE's features?
+- **User-Friendly Interaction**: Mechanics can interact with MAGGIE through a chat interface by either selecting options from dropdowns or writing a free-form text. For example, they can request assistance by saying: “Give me assistance to replace the brake pad (code 12345) from BPW on a trailer.”
+- **Real-Time, Specific Repair Guidance**: MAGGIE delivers a list of all necessary tools and parts, alongside step-by-step guidance on how to perform the requested task, ensuring that even apprentices can follow along safely and accurately.
+- **Embedded Resources**: MAGGIE's answers include links to relevant source materials and images to support the mechanic during the maintenance process.
+- **Scalable and Cost-Efficient Architecture**: The solution leverages Databricks’ suite of tools to handle high volumes of data and requests while preserving low latency and costs.
+
+
+## 2. Technical guide
+### How to deploy & run
+Refer to the official documentation on [how to deploy and run a Databricks Asset Bundle](https://docs.databricks.com/en/dev-tools/bundles/python-wheel.html).
+
+### Explanation of the repo structure
+The main code is in `/src/MAGGIE`, which has the following structure:
+
+*root (/src/MAGGIE)*
+|-`autoloader.py`: reads files from source and uploads them to Unity Catalog
+|-`deployment.py`: supports model deployments
+|-`main.py`: entrypoint where the main flow is defined 
+|-`preprocessing.py`: contains all the custom functions used to pre-process data
+|-`prompt.py`: contains all the textual prompts to instruct each model
+|-`utils.py`: defines variables and hyperparameters
+|-`vector_search.py`: creates and deploys Vector Search Index
+
+Databricks job definitions can be found in `databricks.yml` and in `/resources/MAGGIE_job.yml`.
+
+The folder `scratch` contains the notebooks used during the early development stage as well as those used for the evaluation of the whole application.
+
+
+### Credits
+This project was realized for the [2024 GenAI World Cup](https://hackathon.stackup.dev/web/events/generative-ai-world-cup-2024-so-you-think-you-can-hack) hosted by Databricks.
+
+#### Authors
+- Stefano D'Angelo
+*Github*: [stefanodangelo](https://github.com/stefanodangelo)
+- Hugo Martins
+*Github*: [hrfmartins](https://github.com/hrfmartins)
+- Nicolas Amodeo
+*Github*: [n-bradley](https://github.com/n-bradley/)

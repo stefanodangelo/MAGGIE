@@ -1,4 +1,4 @@
-from utils import (
+from .utils import (
     spark,
     CATALOG_NAME,
     SCHEMA_NAME,
@@ -20,12 +20,11 @@ from utils import (
     MODEL_NAME,
     MODEL_SCRIPT_PATH,
 )
-from autoloader import AutoLoader
-from preprocessing import QRCodeScraper, render_page_as_image
-from vector_search import VectorStore
-from deployment import DeploymentManager
+from .autoloader import AutoLoader
+from .preprocessing import QRCodeScraper
+from .vector_search import VectorStore
+from .deployment import DeploymentManager
 import yaml
-import pymupdf
 
 
 def main():

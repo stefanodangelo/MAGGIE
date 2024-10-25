@@ -4,7 +4,7 @@ from databricks import agents
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.service.serving import EndpointStateReady, EndpointStateConfigUpdate
 import time
-from prompt import REVIEW_APP_INSTRUCTIONS
+from .prompt import REVIEW_APP_INSTRUCTIONS
 
 class DeploymentManager:
     def __init__(self, model_name_full_path: str) -> None:
