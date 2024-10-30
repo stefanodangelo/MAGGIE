@@ -16,7 +16,7 @@ MAGGIE combines indeed **generative AI** and **computer vision** to dynamically 
 To do so, it follows these steps:
 1. It pre-processes maintenance manuals of trailer components in PDF format by chunking them into manageable and searchable units.
 2. It enables accurate identification of parts needed for workshop activities by identifying QR codes in the documents with *OpenCV* and then scraping the links they reference to extract data for parts related to each component. 
-3. It then combines all of the above with Databricks’ foundational model *DBRX Instruct* to deliver relevant content based on mechanics' queries and tailored to specific scenarios, manufacturers, and tasks. 
+3. It then combines all of the above with Meta's *LLama 3.1 70b Instruct* to deliver relevant content based on mechanics' queries and tailored to specific scenarios, manufacturers, and tasks. 
 
 Furthermore, the custom UI makes the user experience much easier by allowing mechanics to interact with MAGGIE either through natural language queries or via pre-structured prompts, ensuring accessibility for all experience levels. 
 
@@ -26,6 +26,7 @@ The design leverages:
 - **Delta Lake** and **Vector Search** for efficient querying, making it easy to retrieve relevant information even if the data volume scales. 
 - **MLflow** and **Mosaic AI Agent Framework** for model scalability, deployment, and governance, allowing MAGGIE to ensure continuous quality. 
 - **Databricks Model Serving** to allow the model to be invoked as a low-latency API on a highly available serverless service, guaranteeing high throughput at low costs. 
+- **Databricks Apps** for an easily-deployable UI through automatic provisioning of serverless compute, offering built-in governance with Unity Catalog and secure user authentication.
 
 Each component is encapsulated within a *Databricks Asset Bundle*, making it easy to update and redeploy the system without significant downtime or codebase restructuring. This modular approach ensures that the system can be adapted to new assets, manufacturers, or repair procedures with minimal effort, driving down costs as the system scales.
 
@@ -52,9 +53,12 @@ The main code is in `/src/MAGGIE`, which has the following structure:
 |-`utils.py`: defines variables and hyperparameters \
 |-`vector_search.py`: creates and deploys Vector Search Index
 
+
+The code used to build the UI can be found in the folder `dash_ui`, which is then easily deployable through Databricks Apps. 
+
 Databricks job definitions can be found in `databricks.yml` and in `/resources/MAGGIE_job.yml`.
 
-The folder `scratch` contains the notebooks used during the early development stage as well as those used for the evaluation of the whole application.
+The folder `scratch` contains the notebooks used during the early development stage as well as those used for the evaluation of the whole application, therefore PLEASE REFER TO IT IN CASE OF FAILURES WHEN RUNNING THE MAIN CODE.
 
 
 ### Credits

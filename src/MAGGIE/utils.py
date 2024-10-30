@@ -79,13 +79,13 @@ VS_INDEX_FULLNAME = TABLE_PATH.format(table_name="hackathon_pdfs_self_managed_vs
 PDFS_TABLE_FULLNAME = TABLE_PATH.format(table_name=CLEAN_PDF_TABLE) # Table containing the PDF's chunks
 
 CHAIN_CONFIG_FILE = "rag_chain_config.yaml"
-MODEL_SCRIPT_PATH = os.path.join(os.getcwd(), "mlflow/chain.py")
+MODEL_SCRIPT_PATH = os.path.join(os.getcwd(), "chain.py")
 
-MODEL_NAME = "hackathon_maggie"
+MODEL_NAME = "maggie"
 
 EMBEDDING_MODEL = "databricks-gte-large-en"
-# CHAT_MODEL = "databricks-meta-llama-3-1-70b-instruct"
-CHAT_MODEL = 'dbrx_instruct'
+CHAT_MODEL = "databricks-meta-llama-3-1-70b-instruct"
+# CHAT_MODEL = "dbrx_instruct"
 
 RAG_CONFIG = {
     "databricks_resources": {
@@ -108,10 +108,11 @@ RAG_CONFIG = {
     "llm_config": {
         "llm_parameters": {"max_tokens": MAX_TOKENS, "temperature": TEMPERATURE},
         "llm_prompt_template": SYSTEM_MESSAGE_TEMPLATE,
+        "llm_system_prompt_rewrite": OUTPUT_REWRITE_WITH_CONTEXT_TEMPLATE,
         "tools_prompt_addition": TOOLS_SYSTEM_MESSAGE_ADDITION,
         "llm_prompt_template_variables": extract_vars_from_format_str(SYSTEM_MESSAGE_TEMPLATE),
-        "output_rewrite_template": OUTPUT_REWRITE_TEMPLATE,
-        "output_rewrite_template_variables": extract_vars_from_format_str(OUTPUT_REWRITE_TEMPLATE),
+        "output_rewrite_template": OUTPUT_REWRITE_WITH_HISTORY_TEMPLATE,
+        "output_rewrite_template_variables": extract_vars_from_format_str(OUTPUT_REWRITE_WITH_HISTORY_TEMPLATE),
     },
     "retriever_config": {
         "embedding_model": EMBEDDING_MODEL,
@@ -122,5 +123,6 @@ RAG_CONFIG = {
         "parameters": {"k": TOP_K, "query_type": SIMILARITY_QUERY_TYPE},
         "schema": {"chunk_text": "content", "document_uri": "url", "primary_key": "id", "page_nr": "page_number"}, # the keys need to match CHUNK_TEMPLATE's variables
         "vector_search_index": VS_INDEX_FULLNAME,
+        "uri_prefix": BASE_URL,
     },
 }

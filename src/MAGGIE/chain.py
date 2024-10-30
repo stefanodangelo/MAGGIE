@@ -21,6 +21,10 @@ from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain.agents.react.agent import create_react_agent
 from langchain_community.tools.databricks import UCFunctionToolkit
 
+from PIL import Image
+import pymupdf
+import base64
+import requests
 
 ## Enable MLflow Tracing
 mlflow.langchain.autolog()
@@ -110,20 +114,38 @@ def format_context(docs):
     ]
     return "".join(chunk_contents)
 
+def get_page_image_bytes(url: str, page_number: int) -> str:
+    pdf_path = './doc.pdf'
+    try:
+        pdf = requests.get(url)
+    except:
+        return ""
+    with open(pdf_path, 'wb') as f:
+        f.write(pdf.content)
+    doc = pymupdf.open(pdf_path)
+    page = doc[page_number]
+    pix = page.get_pixmap(dpi=300)
+    # return Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+    img = pix.tobytes("png")  # Convert to PNG bytes
+    img_str = base64.b64encode(img).decode()  # Convert to base64 and decode to string
+    os.remove(pdf_path)
+    return img_str
+
 def combine_references(outputs):
     refs = set()
     for var, output in outputs.items():
         if 'references' in var:
             for ref in output:
-                refs.add((ref.metadata['id'], ref.page_content, ref.metadata['url'], ref.metadata['page_number']))
+                refs.add((ref.metadata['id'], ref.page_content, retriever_config.get("uri_prefix") + ref.metadata['url'].split('/')[-1], ref.metadata['page_number'], ref.metadata['url'].replace("dbfs:", "")))
 
-    references = dict()
-    for id, content, url, page_nr in refs:
-        references[int(id)] = dict(zip(["passage", "url", "page_number"], [content, url, int(page_nr)]))
+    references = []
+    for _, content, url, page_nr, pdf_path in refs:
+        references.append(dict(zip(["content", "doc_uri", "page_number", "img_base64"], [content, url, int(page_nr)+1, get_page_image_bytes(url, int(page_nr))])))
 
     return references
 
-def get_tools(wh_id="36943660786efec7", catalog='`dev-gold`', schema="maggie_hackathon"):
+
+def get_tools(wh_id, catalog='`dev-gold`', schema="maggie_hackathon"):
     return (
         UCFunctionToolkit(warehouse_id=wh_id)
         # Include functions as tools using their qualified names.
@@ -134,6 +156,7 @@ def get_tools(wh_id="36943660786efec7", catalog='`dev-gold`', schema="maggie_hac
 
 
 
+
 #### PROMPTS
 
 # Prompt Template for generation
@@ -141,6 +164,17 @@ full_prompt = ChatPromptTemplate.from_messages(
     [
         ("system", llm_config.get("llm_prompt_template")),
         # Note: This chain does not compress the history, so very long conversations can overflow the context window.
+        MessagesPlaceholder(variable_name="formatted_chat_history"),
+        # User's most current question
+        ("user", "{question}"),
+    ]
+)
+
+
+full_prompt_and_rewrite = ChatPromptTemplate.from_messages(
+    [
+        ("system", llm_config.get("llm_prompt_template") + llm_config.get("llm_system_prompt_rewrite")),
+        # Note: This chain does not compress the history, so very long converastions can overflow the context window.
         MessagesPlaceholder(variable_name="formatted_chat_history"),
         # User's most current question
         ("user", "{question}"),
@@ -216,6 +250,7 @@ vector_store_chain = RunnableBranch(
     itemgetter("question"),
 ) | vector_search_as_retriever
 
+
 prompt_inputs = (
     {
         "question": lambda x: x["question"],
@@ -225,44 +260,115 @@ prompt_inputs = (
     }
 )
 
+# main_prompt_inputs = (
+#     {
+#         "question": lambda x: x["main_question"],
+#         "chat_history": lambda x: x["chat_history"],
+#         "formatted_chat_history": lambda x: x["formatted_chat_history"],
+#         "context": lambda x: format_context(x["main_references"]),
+#     }
+# )
+
+# parts_prompt_inputs = (
+#     {
+#         "question": lambda x: x["parts_question"],
+#         "chat_history": lambda x: x["chat_history"],
+#         "formatted_chat_history": lambda x: x["formatted_chat_history"],
+#         "context": lambda x: format_context(x["parts_references"]),
+#     }
+# )
+
+# tools_prompt_inputs = (
+#     {
+#         "question": lambda x: x["tools_question"],
+#         "chat_history": lambda x: x["chat_history"],
+#         "formatted_chat_history": lambda x: x["formatted_chat_history"],
+#         "context": lambda x: format_context(x["tools_references"]),
+#     }
+# )
+
+
+all_prompt_inputs = (
+    {
+        "question": lambda x: x["tools_question"],
+        "chat_history": lambda x: x["chat_history"],
+        "formatted_chat_history": lambda x: x["formatted_chat_history"],
+        "context": lambda x: "\n".join([format_context(x["main_references"]), format_context(x["parts_references"]), format_context(x["tools_references"])]),
+    }
+)
+
 update_chat_history_passthrough = RunnablePassthrough.assign(chat_history=RunnableLambda(lambda x: update_chat_history(x))).assign(formatted_chat_history=itemgetter("chat_history") | RunnableLambda(format_chat_history_for_prompt))
 
 
 # Additional question to make the LLM list out parts
-parts_listing_question = RunnableLambda(lambda x: "What compatible parts or components are needed?")
-tools_listing_question = RunnableLambda(lambda x: "What tools must be used?")
+parts_listing_question = RunnableLambda(lambda x: "\n".join([x["question"], "What compatible parts or components are needed?"]))
+tools_listing_question = RunnableLambda(lambda x: "\n".join([x["question"], "What tools must be used?"]))
 
-# Final outputs selection
-select_outputs = lambda x: dict((k, x[k]) for k in ["question", "answer", "references"])
-dict_to_str = lambda x: json.dumps(x)
+
+# chain = (
+#     input_parser
+#     | RunnablePassthrough.assign(references=vector_store_chain).assign(answer=prompt_inputs | full_prompt | model_parser)
+#     | update_chat_history_passthrough.assign(original_question=itemgetter("question"), question=parts_listing_question) # update chat history and add new question for parts to the chain
+#     | RunnablePassthrough.assign(
+#         original_references=itemgetter("references"),
+#         original_answer=itemgetter("answer"),
+#         references=vector_store_chain
+#     ).assign(answer=prompt_inputs | full_prompt | model_parser)
+#     | update_chat_history_passthrough.assign(question=tools_listing_question) # update chat history and add new question for tools to the chain
+#     | RunnablePassthrough.assign(
+#         parts_references=itemgetter("references"),
+#         parts_answer=itemgetter("answer"),
+#         references=vector_store_chain
+#     ).assign(answer=prompt_inputs | full_prompt | model_parser)
+#     | update_chat_history_passthrough # update chat history before rewriting all the answers
+#     .assign(answer=output_rewrite_prompt_sequential | model_parser)
+#     | {
+#         "answer": itemgetter("answer"),
+#         "references": lambda x: combine_references(x),
+#     }
+#     | RunnableLambda(lambda x: dict((k, x[k]) for k in ["answer", "references"]))
+#     | RunnableLambda(lambda x: json.dumps(x))
+#     # | RunnableLambda(agent_executor_wrapper)  # Pass the query to the agent executor
+#     # | RunnablePassthrough()
+# )
 
 chain = (
     input_parser
-    | RunnablePassthrough.assign(references=vector_store_chain).assign(answer=prompt_inputs | full_prompt | model_parser)
-    | update_chat_history_passthrough.assign(original_question=itemgetter("question"), question=parts_listing_question) # update chat history and add new question for parts to the chain
+    | {
+        "main_question": itemgetter("question"),
+        "parts_question": parts_listing_question,
+        "tools_question": tools_listing_question,
+        "main_references": {"question": itemgetter("question"), "chat_history": itemgetter("chat_history")} | vector_store_chain,
+        "parts_references": {"question": parts_listing_question, "chat_history": itemgetter("chat_history")} | vector_store_chain,
+        "tools_references": {"question": tools_listing_question, "chat_history": itemgetter("chat_history")} | vector_store_chain,
+        "chat_history": itemgetter("chat_history"),
+        "formatted_chat_history": itemgetter("formatted_chat_history"),
+    }
+    # | RunnablePassthrough.assign(
+    #     main_answer=main_prompt_inputs | full_prompt | model_parser, 
+    #     parts_answer=parts_prompt_inputs | full_prompt | model_parser,
+    #     tools_answer=tools_prompt_inputs | full_prompt | model_parser,
+    # )
+    # | RunnablePassthrough.assign(question=itemgetter("main_question"), answer=itemgetter("main_answer")) 
+    # | update_chat_history_passthrough # update chat history
+    # .assign(question=parts_listing_question, answer=itemgetter("parts_answer"))
+    # | update_chat_history_passthrough # update chat history
+    # .assign(question=tools_listing_question, answer=itemgetter("tools_answer")) 
+    # | update_chat_history_passthrough # update chat history
+    # .assign(answer=output_rewrite_prompt_sequential | model_parser)
     | RunnablePassthrough.assign(
-        original_references=itemgetter("references"),
-        original_answer=itemgetter("answer"),
-        references=vector_store_chain
-    ).assign(answer=prompt_inputs | full_prompt | model_parser)
-    | update_chat_history_passthrough.assign(question=tools_listing_question) # update chat history and add new question for tools to the chain
-    | RunnablePassthrough.assign(
-        parts_references=itemgetter("references"),
-        parts_answer=itemgetter("answer"),
-        references=vector_store_chain
-    ).assign(answer=prompt_inputs | full_prompt | model_parser)
-    | update_chat_history_passthrough # update chat history before rewriting all the answers
-    .assign(answer=output_rewrite_prompt_sequential | model_parser)
-    .assign(
-        question=itemgetter("original_question"),
-        references=RunnableLambda(lambda x: combine_references(x)),
+        question=itemgetter("main_question"),
+        answer=all_prompt_inputs | full_prompt_and_rewrite | model_parser,
     )
-    | RunnableLambda(select_outputs)
-    | RunnableLambda(dict_to_str)
+    | {
+        "answer": itemgetter("answer"),
+        "references": lambda x: combine_references(x),
+    }
+    | RunnableLambda(lambda x: dict((k, x[k]) for k in ["answer", "references"]))
+    | RunnableLambda(lambda x: json.dumps(x))
     # | RunnableLambda(agent_executor_wrapper)  # Pass the query to the agent executor
-    | RunnablePassthrough()
+    # | RunnablePassthrough()
 )
-
 
 
 #### MLFLOW SETTINGS

@@ -22,12 +22,13 @@ Question: {question}
 
 CHUNK_TEMPLATE = "Passage: {chunk_text}\nSource: Page {page_nr} from {document_uri}\n"
 
-OUTPUT_REWRITE_TEMPLATE = """
+OUTPUT_REWRITE_WITH_HISTORY_TEMPLATE = """
 Based on the chat history below, we want you to restructure the answer into a list of tools, a list of parts and a series of steps needed to accomplish the actions outlined in the answer.
-Additionally, list out some safety advices related to the required steps and tools used.
+Additionally, list out some safety advice related to the required steps and tools used.
 List tools, parts, and steps that are only mentioned in the answer. 
 If any step requires sub-steps, list them too. Do not add explanation. 
 Include as many details as possible.
+Answer directly, do not start with something like: here is the restructured answer.
 
 Example:
     Chat history:
@@ -50,6 +51,7 @@ Example:
             
         Steps required:
             1. Remove the wheel.
+                1.1 Use the jack to lift the trailer up.
             2. Remove the slider bolt.
             3. Pivot the caliper up.
             4. Slide out the old brake pads.
@@ -59,8 +61,10 @@ Example:
             8. Monitor the brake fluid level.
             9. Reposition the caliper.
             10. Reinstall the slider bolt.
+                10.1 Tighten the bolts a bit while the trailer is up. 
+                10.2 Lower the trailer, then lower the jack and finally tighten the bolts completely.
 
-        Safety advices:
+        Safety advice:
             - Ensure the trailer is securely parked: Park the trailer on a flat, stable surface and engage the parking brake to prevent movement.
             - Wear protective gear: Use gloves, safety glasses, and sturdy work boots to protect your hands, eyes, and feet.
             - Use proper lifting equipment: Use a jack rated for the weight of the trailer and jack stands to support it safely before removing the wheel.
@@ -74,7 +78,60 @@ Example:
     Chat history: {chat_history}
 
     Restructured Answer:
-    """
+"""
+
+OUTPUT_REWRITE_WITH_CONTEXT_TEMPLATE = """
+Your answer must contain a list of tools, a list of parts and a series of steps needed to accomplish the actions outlined in the provided context.
+Additionally, list out some safety advice related to the required steps and tools used.
+List tools, parts, and steps that are only mentioned in the context. 
+If any step requires sub-steps, list them too. Do not add explanation. 
+Include as many details as possible.
+
+Example:
+    Context:
+        To replace brake pads on a trailer you need to first remove the wheel and the slider bolt with a torx wrench (T25, BPW no. 02.0130.44.10). 
+        Next, pivot the caliper up and slide out the old brake pads. Then, slide in the new brake pads and retract the pistons. 
+        To check if you did replaced them correctly, you can monitor the brake fluid level. Finally, reposition the caliper and reinstall the slider bolt.
+    Question: How do I replace brake pads on a trailer?
+    Restructured Answer:
+        Here is what you need to replace brake pads on a trailer. 
+        
+        Tools required:
+            - torx wrench (T25, BPW no. 02.0130.44.10)
+        
+        Parts required:
+            - new brake pads
+            - (optional) new brake fluid
+            
+        Steps required:
+            1. Remove the wheel.
+                1.1 Use the jack to lift the trailer up.
+            2. Remove the slider bolt.
+            3. Pivot the caliper up.
+            4. Slide out the old brake pads.
+            5. Replace the retaining clips.
+            6. Slide in the new brake pads.
+            7. Retract the pistons.
+            8. Monitor the brake fluid level.
+            9. Reposition the caliper.
+            10. Reinstall the slider bolt.
+                10.1 Tighten the bolts a bit while the trailer is up. 
+                10.2 Lower the trailer, then lower the jack and finally tighten the bolts completely.
+
+        Safety advice:
+            - Ensure the trailer is securely parked: Park the trailer on a flat, stable surface and engage the parking brake to prevent movement.
+            - Wear protective gear: Use gloves, safety glasses, and sturdy work boots to protect your hands, eyes, and feet.
+            - Use proper lifting equipment: Use a jack rated for the weight of the trailer and jack stands to support it safely before removing the wheel.
+            - Avoid contact with hot components: Let the brakes cool down completely before starting the work to avoid burns from hot parts.
+            - Work in a well-ventilated area: If replacing brake fluid, work in a well-ventilated area to avoid inhaling fumes.
+            - Handle brake fluid carefully: Brake fluid is corrosive; avoid skin contact and clean spills immediately.
+            - Check for correct tool usage: Use the correct size Torx wrench (T25) to avoid stripping the bolts.
+            - Do not overfill the brake fluid reservoir: If adding brake fluid, ensure the level is correct to avoid pressure issues.
+            - Check brake function before use: After reassembly, pump the brake pedal to ensure proper brake function and check for leaks or unusual noises before moving the trailer.
+
+Restructured Answer:
+"""
+
 
 TOOLS_SYSTEM_MESSAGE_ADDITION = """
 You have access to the following tools:
