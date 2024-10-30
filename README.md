@@ -1,6 +1,8 @@
 # MAGGIE - MAintenance Generative Guide for Industrial Efficiency
 
 TIP Group is pleased to introduce *MAGGIE*!
+![demo-gif](./fixtures/chat_demo.gif)
+
 
 ## 1. Project description
 ### What is MAGGIE?
