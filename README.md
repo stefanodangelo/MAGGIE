@@ -20,7 +20,7 @@ MAGGIE combines indeed **generative AI** and **computer vision** to dynamically 
 To do so, it follows these steps:
 1. It pre-processes maintenance manuals of trailer components in PDF format by chunking them into manageable and searchable units.
 2. It enables accurate identification of parts needed for workshop activities by identifying QR codes in the documents with *OpenCV* and then scraping the links they reference to extract data for parts related to each component. 
-3. It then combines all of the above with Meta's *LLama 3.1 70b Instruct* to deliver relevant content based on mechanics' queries and tailored to specific scenarios, manufacturers, and tasks. 
+3. It then combines all of the above with Meta's *LLama 3.1 70b Instruct* model to deliver relevant content based on mechanics' queries and tailored to specific scenarios, manufacturers, and tasks. 
 
 Furthermore, the custom UI makes the user experience much easier by allowing mechanics to interact with MAGGIE either through natural language queries or via pre-structured prompts, ensuring accessibility for all experience levels. 
 
