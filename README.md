@@ -3,6 +3,8 @@
 TIP Group is pleased to introduce *MAGGIE*!
 ![demo-gif](./fixtures/chat_demo.gif)
 
+Check out the official demo [at this link](https://youtu.be/RffJoNJlioE).
+
 
 ## 1. Project description
 ### What is MAGGIE?
